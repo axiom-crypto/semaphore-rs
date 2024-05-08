@@ -4,7 +4,7 @@
 #![allow(clippy::multiple_crate_versions)]
 
 pub mod cascading_merkle_tree;
-mod circuit;
+pub mod circuit;
 mod field;
 pub mod generic_storage;
 pub mod hash;

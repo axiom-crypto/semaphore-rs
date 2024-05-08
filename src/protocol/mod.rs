@@ -10,8 +10,9 @@ use ark_bn254::{Bn254, FrParameters, Parameters};
 use ark_circom::CircomReduction;
 use ark_ec::bn::Bn;
 use ark_ff::Fp256;
+pub use ark_groth16::prepare_verifying_key;
 use ark_groth16::{
-    create_proof_with_reduction_and_matrices, prepare_verifying_key, Proof as ArkProof,
+    create_proof_with_reduction_and_matrices, Proof as ArkProof, VerifyingKey as ArkVerifyingKey,
 };
 use ark_relations::r1cs::SynthesisError;
 use ark_std::UniformRand;
@@ -33,11 +34,32 @@ pub type G2 = ([U256; 2], [U256; 2]);
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Proof(pub G1, pub G2, pub G1);
 
+#[derive(Default, Clone, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
+pub struct VerifyingKey {
+    pub alpha_g1:     G1,
+    pub beta_g2:      G2,
+    pub gamma_g2:     G2,
+    pub delta_g2:     G2,
+    pub gamma_abc_g1: Vec<G1>,
+}
+
 impl From<ArkProof<Bn<Parameters>>> for Proof {
     fn from(proof: ArkProof<Bn<Parameters>>) -> Self {
         let proof = ark_circom::ethereum::Proof::from(proof);
         let (a, b, c) = proof.as_tuple();
         Self(a, b, c)
+    }
+}
+
+pub fn get_ethereum_vkey(vk: ArkVerifyingKey<Bn<Parameters>>) -> VerifyingKey {
+    let eth_vk: ark_circom::ethereum::VerifyingKey = vk.into();
+    let (alpha1, beta2, gamma2, delta2, ic) = eth_vk.as_tuple();
+    VerifyingKey {
+        alpha_g1:     alpha1,
+        beta_g2:      beta2,
+        gamma_g2:     gamma2,
+        delta_g2:     delta2,
+        gamma_abc_g1: ic,
     }
 }
 
